@@ -1,9 +1,13 @@
-import 'dart:convert';
-import 'dart:math';
+// ignore_for_file: unnecessary_new
 
+import 'dart:convert';
+
+import 'package:menetrendek_api/src/classes/route.dart';
 import 'package:menetrendek_api/src/enums.dart';
-import 'package:menetrendek_api/src/route.dart';
+import 'package:menetrendek_api/src/classes/sub_route.dart';
 import 'package:http/http.dart' as HTTP;
+
+import 'classes/station.dart';
 
 class MenetrendAPI {
   //Base authory & authory path
@@ -25,6 +29,9 @@ class MenetrendAPI {
     int walkDistanceInMeters = 1000, //Max distance to next station
     int transferCount = 5, //Max transfer count in bus
     int waitInMinutes = 240, //Max wait limit
+    int? hours = null,
+    int? minutes = null,
+    DateTime? searchDate = null,
     bool backAndForth = false, //This route go there & back?
     RouteDirection routeDirection =
         RouteDirection.There, //Target route direction
@@ -34,16 +41,36 @@ class MenetrendAPI {
     //The result(s)
     List<Route> routes = [];
 
+    //Init the variables (date - hour - minutes)
+    String date =
+        "${DateTime.now().year}-${DateTime.now().month < 10 ? "0${DateTime.now().month}" : DateTime.now().month}-${DateTime.now().day < 10 ? "0${DateTime.now().day}" : DateTime.now().day}";
+
+    String hour = DateTime.now().hour < 10
+        ? "0${DateTime.now().hour}"
+        : "${DateTime.now().hour}";
+
+    String minute = DateTime.now().minute < 10
+        ? "0${DateTime.now().minute}"
+        : "${DateTime.now().minute}";
+
+    if (searchDate != null) {
+      date =
+          "${searchDate.year}-${searchDate.month < 10 ? "0${searchDate.month}" : searchDate.month}-${searchDate.day < 10 ? "0${searchDate.day}" : searchDate.day}";
+    }
+
+    if (hours != null) {
+      hour = "${hours}";
+    }
+
+    if (minutes != null) {
+      minute = "${minutes}";
+    }
+
     //The query parameters
     Map<String, dynamic> parameters = {
-      "datum":
-          "${DateTime.now().year}-${DateTime.now().month < 10 ? "0${DateTime.now().month}" : DateTime.now().month}-${DateTime.now().day < 10 ? "0${DateTime.now().day}" : DateTime.now().day}",
-      "hour": DateTime.now().hour < 10
-          ? "0${DateTime.now().hour}"
-          : "${DateTime.now().hour}",
-      "min": DateTime.now().minute < 10
-          ? "0${DateTime.now().minute}"
-          : "${DateTime.now().minute}",
+      "datum": date,
+      "hour": hour,
+      "min": minute,
       "naptipus": 0,
       "preferencia": 0,
       "keresztul": through,
@@ -51,6 +78,7 @@ class MenetrendAPI {
       "maxwalk": walkDistanceInMeters,
       "maxatszallas": "${transferCount}",
       "maxvar": "${waitInMinutes}",
+      "rendezes": 1,
       "honnan": from,
       "hova": to,
     };
@@ -81,102 +109,103 @@ class MenetrendAPI {
 
     //Set all routes
     for (int i = 0; i < stationResults.length; i++) {
-      //Set all parameters (See more route.dart file)
-      Map<String, dynamic> start = {
-        "departureCity": stationResults["${i + 1}"]["departureCity"],
-        "departureStation": stationResults["${i + 1}"]["departureStation"],
-      };
+      List<SubRoute> subRoutes = [];
 
-      Map<String, dynamic> target = {
-        "arrivalCity": stationResults["${i + 1}"]["arrivalCity"],
-        "arrivalStation": stationResults["${i + 1}"]["arrivalStation"],
-      };
+      List<dynamic> nativeInformations =
+          stationResults["${i + 1}"]["nativeData"];
 
-      String name =
-          stationResults["${i + 1}"]["jaratinfok"]["0"]["vonalnev"] as String;
+      for (int j = 0; j < nativeInformations.length; j++) {
+        String _routeName = nativeInformations[j]["DomainCompanyName"];
 
-      double distance =
-          stationResults["${i + 1}"]["jaratinfok"]["0"]["distance"] as double;
+        int _ticketPrice = nativeInformations[j]["Fare"];
+        int _additionaltPrice = nativeInformations[j]["FareExtra"];
+        int _seatPrice = nativeInformations[j]["FareSeatRes"];
+        int _duration = nativeInformations[j]["ArrivalTime"];
 
-      int transferCount =
-          stationResults["${i + 1}"]["atszallasok_szama"] as int;
+        double _distance = (nativeInformations[j]["Distance"] as int) / 1000;
 
-      int ticketPrice =
-          stationResults["${i + 1}"]["jaratinfok"]["0"]["fare"] as int;
+        bool _wifi = nativeInformations[j]["Wifi"] != 0;
+        bool _highSpeed = nativeInformations[j]["HighSpeed"] != 0;
+        bool _lowFloor = nativeInformations[j]["LowFloor"] != 0;
+        bool _preBuy = nativeInformations[j]["Prebuy"] != 0;
 
-      int seatTicketPrice = stationResults["${i + 1}"]["jaratinfok"]["0"]
-          ["seat_ticket_price"] as int;
+        int hour = ((nativeInformations[j]["DepartureTime"] / 60) as double)
+            .floor()
+            .abs();
 
-      int additionalTicketPrice = stationResults["${i + 1}"]["jaratinfok"]["0"]
-          ["additional_ticket_price"] as int;
+        int minutess = ((((nativeInformations[j]["DepartureTime"] / 60) -
+                    ((nativeInformations[j]["DepartureTime"] / 60) as double)
+                        .round()) *
+                60) as double)
+            .floor()
+            .abs();
 
-      bool hasWifi =
-          stationResults["${i + 1}"]["jaratinfok"]["0"]["wifi"] as int == 1;
+        DateTime _startDate = searchDate ??
+            new DateTime(DateTime.now().year, DateTime.now().month,
+                DateTime.now().day, hour, minutess);
 
-      bool isHighSpeedVehilce = stationResults["${i + 1}"]["jaratinfok"]["0"]
-              ["nagysebessegu"] as int ==
-          1;
+        hour = ((nativeInformations[j]["ArrivalTime"] / 60) as double).floor();
 
-      bool eTicketIsAvailable = stationResults["${i + 1}"]["jaratinfok"]["0"]
-              ["internetes_jegy"] as int ==
-          1;
+        minutess = ((((nativeInformations[j]["ArrivalTime"] / 60) -
+                    ((nativeInformations[j]["ArrivalTime"] / 60) as double)
+                        .round()) *
+                60) as double)
+            .floor();
 
-      bool isRisky = stationResults["${i + 1}"]["riskyTransfer"] as bool;
+        DateTime _arrivalDate = searchDate ??
+            new DateTime(DateTime.now().year, DateTime.now().month,
+                DateTime.now().day, hour, minutess);
 
-      int year = int.parse(
-          all_results["results"]["date_got"].toString().split('-')[0]);
-      int month = int.parse(
-          all_results["results"]["date_got"].toString().split('-')[1]);
-      int day = int.parse(
-          all_results["results"]["date_got"].toString().split('-')[2]);
+        if (searchDate != null) {
+          _startDate = new DateTime(searchDate.year, searchDate.month,
+              searchDate.day, hour, minutess);
+        }
 
-      int hour = int.parse(
-          stationResults["${i + 1}"]["indulasi_ido"].toString().split(':')[0]);
-      int minutes = int.parse(
-          stationResults["${i + 1}"]["indulasi_ido"].toString().split(':')[1]);
+        Station _startStation = new Station(
+          nativeInformations[j]["DepStationName"],
+          nativeInformations[j]["DepartureStation"],
+          nativeInformations[j]["FromSettle"],
+          nativeInformations[j]["DepartureSettle"],
+          StationType.Station,
+        );
 
-      DateTime startDate = new DateTime(year, month, day, hour, minutes);
+        Station _arrivalStation = new Station(
+          nativeInformations[j]["ArrStationName"],
+          nativeInformations[j]["ArrivalStation"],
+          nativeInformations[j]["ToSettle"],
+          nativeInformations[j]["ArrivalSettle"],
+          StationType.Station,
+        );
 
-      hour = int.parse(
-          stationResults["${i + 1}"]["erkezesi_ido"].toString().split(':')[0]);
-      minutes = int.parse(
-          stationResults["${i + 1}"]["erkezesi_ido"].toString().split(':')[1]);
+        SubRoute subRoute = new SubRoute(
+          startLocation: _startStation,
+          targetLocation: _arrivalStation,
+          name: _routeName,
+          startDate: _startDate,
+          arrivalDate: _arrivalDate,
+          duration: _startDate.difference(_arrivalDate),
+          distance: _distance,
+          ticketPrice: _ticketPrice,
+          additionalTicketPrice: _additionaltPrice,
+          seatTicketPrice: _seatPrice,
+          hasWifi: _wifi,
+          highSpeedVehilce: _highSpeed,
+          eTicket: _preBuy,
+          risky: false,
+        );
 
-      DateTime arrivalDate = new DateTime(year, month, day, hour, minutes);
+        subRoutes.add(subRoute);
+      }
 
-      hour = int.parse(
-          stationResults["${i + 1}"]["osszido"].toString().split(':')[0]);
-      minutes = int.parse(
-          stationResults["${i + 1}"]["osszido"].toString().split(':')[1]);
-
-      Duration duration = new Duration(days: 0, hours: hour, minutes: minutes);
-
-      routes.add(
-        new Route(
-            startLocation: start,
-            targetLocation: target,
-            name: name,
-            startDate: startDate,
-            arrivalDate: arrivalDate,
-            duration: duration,
-            transferCount: transferCount,
-            distance: distance,
-            ticketPrice: ticketPrice,
-            additionalTicketPrice: additionalTicketPrice,
-            seatTicketPrice: seatTicketPrice,
-            hasWifi: hasWifi,
-            highSpeedVehilce: isHighSpeedVehilce,
-            eTicket: eTicketIsAvailable,
-            risky: isRisky),
-      );
+      routes.add(new Route(subRoutes));
     }
 
     return routes;
   }
 
-  Future<List<Map<String, dynamic>>> getStationOrAddrByText(
+  Future<List<Station>> getStationOrAddrByText(
       {required String stateName, String searchIn = "stations"}) async {
-    List<Map<String, dynamic>> result = [];
+    List<Station> result = [];
 
     //Query parameters
     Map<String, dynamic> parameters = {
@@ -203,14 +232,17 @@ class MenetrendAPI {
     //Set the return
     for (Map item in temp["results"]) {
       result.add(
-        {
-          "lsname": item["lsname"],
-          "ls_id": item["ls_id"],
-          "site_code": item["site_code"],
-          "settlement_id": item["settlement_id"] is String
+        new Station(
+          item["lsname"],
+          item["ls_id"],
+          item["settlement_name"],
+          item["settlement_id"] is String
               ? int.parse(item["settlement_id"])
               : item["settlement_id"],
-        },
+          item["type"] as String == "telepules"
+              ? StationType.Settlement
+              : StationType.Station,
+        ),
       );
     }
 
