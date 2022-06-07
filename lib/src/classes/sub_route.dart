@@ -1,10 +1,11 @@
-class Route {
+import 'package:menetrendek_api/src/classes/station.dart';
+import 'package:menetrendek_api/src/intefaces/iroute.dart';
+
+class SubRoute implements IRoute {
   //<--- Variables --->
 
-  //All information from start stasion or address
-  Map<String, dynamic> _startLocation = {};
-  //All information from end stasion or address
-  Map<String, dynamic> _endLocation = {};
+  late Station _start;
+  late Station _arrival;
 
   //The route name
   String _lineName = "";
@@ -39,11 +40,17 @@ class Route {
 
   //<--- Properties --->
 
-  ///Start station or address information
-  Map<String, dynamic> get StartLocation => _startLocation;
+  @override
+  Station get StartStation => _start;
 
-  ///Target station or address information
-  Map<String, dynamic> get TargetLocation => _endLocation;
+  @override
+  Station get TargetStation => _start;
+
+  @override
+  DateTime get ArrivalTime => _arrivalDate;
+
+  @override
+  DateTime get DepartureTime => _startDate;
 
   ///Name of the route
   String get RouteName => _lineName;
@@ -54,7 +61,6 @@ class Route {
   ///The arrival date of the route to target location
   DateTime get ArrivalDate => _arrivalDate;
 
-  ///Duration of the travel
   Duration get DurationOfTheArrival => _durationOfArrival;
 
   ///Transfer count of the travel
@@ -63,14 +69,7 @@ class Route {
   ///Distance of the travel
   double get Distance => _distance;
 
-  ///The price without discount
   int get TicketPrice => _ticketPrice;
-
-  ///The price with 50% discount
-  int get StudentTicketPrice => (_ticketPrice * 0.5).round();
-
-  ///The price with 90% discount
-  int get AnotherTicketPrice => (_ticketPrice * 0.9).round();
 
   ///The additional price
   int get AdditionalTicketPrice => _additionalTicketPrice;
@@ -93,14 +92,13 @@ class Route {
   //<--- Methods --->
 
   //Constructor
-  Route({
-    required Map<String, dynamic> startLocation,
-    required Map<String, dynamic> targetLocation,
+  SubRoute({
+    required Station startLocation,
+    required Station targetLocation,
     required String name,
     required DateTime startDate,
     required DateTime arrivalDate,
     required Duration duration,
-    required int transferCount,
     required double distance,
     required int ticketPrice,
     required int additionalTicketPrice,
@@ -110,13 +108,12 @@ class Route {
     required bool eTicket,
     required bool risky,
   }) {
-    this._startLocation = startLocation;
-    this._endLocation = targetLocation;
+    this._start = startLocation;
+    this._arrival = startLocation;
     this._lineName = name;
     this._startDate = startDate;
     this._arrivalDate = arrivalDate;
     this._durationOfArrival = duration;
-    this._transferCount = transferCount;
     this._distance = distance;
     this._ticketPrice = ticketPrice;
     this._additionalTicketPrice = additionalTicketPrice;
