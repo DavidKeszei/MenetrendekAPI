@@ -19,3 +19,9 @@ enum StationType {
   Settlement,
   Station,
 }
+
+enum TicketType {
+  Normal,
+  Student,
+  Ninty,
+}
