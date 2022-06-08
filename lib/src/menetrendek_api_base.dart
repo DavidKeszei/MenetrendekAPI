@@ -2,17 +2,17 @@
 
 import 'dart:convert';
 
-import 'package:menetrendek_api/src/classes/route.dart';
-import 'package:menetrendek_api/src/enums.dart';
-import 'package:menetrendek_api/src/classes/sub_route.dart';
+import '../src/classes/route.dart';
+import '../src/enums.dart';
+import '../src/classes/sub_route.dart';
 import 'package:http/http.dart' as HTTP;
 
-import 'classes/station.dart';
+import '../src/classes/station.dart';
 
 class MenetrendAPI {
   //Base authory & authory path
-  String _baseURL = "menetrendek.hu";
-  String _basePath = "/menetrend/interface/index.php";
+  final String _baseURL = "menetrendek.hu";
+  final String _basePath = "/menetrend/interface/index.php";
 
   //One instance for query (singleton pattern)
   static MenetrendAPI get Instance {
@@ -29,17 +29,19 @@ class MenetrendAPI {
     int walkDistanceInMeters = 1000, //Max distance to next station
     int transferCount = 5, //Max transfer count in bus
     int waitInMinutes = 240, //Max wait limit
-    int? hours = null,
-    int? minutes = null,
-    DateTime? searchDate = null,
+    int? hours = null, //The start hour
+    int? minutes = null, //The minutes of the start hour
+    DateTime? searchDate = null, //Start date of the search
     bool backAndForth = false, //This route go there & back?
+    bool getAllResult = false, //Get all route, regardless of the time of day
     RouteDirection routeDirection =
         RouteDirection.There, //Target route direction
-    PartOfTheDay partOfTheDay =
-        PartOfTheDay.During_The_Day, //Part of the day in query
   }) async {
     //The result(s)
     List<Route> routes = [];
+
+    late PartOfTheDay partOfTheDay;
+    late Map<String, dynamic> parameters;
 
     //Init the variables (date - hour - minutes)
     String date =
@@ -53,6 +55,7 @@ class MenetrendAPI {
         ? "0${DateTime.now().minute}"
         : "${DateTime.now().minute}";
 
+    //Check any parameters for null value
     if (searchDate != null) {
       date =
           "${searchDate.year}-${searchDate.month < 10 ? "0${searchDate.month}" : searchDate.month}-${searchDate.day < 10 ? "0${searchDate.day}" : searchDate.day}";
@@ -66,22 +69,53 @@ class MenetrendAPI {
       minute = "${minutes}";
     }
 
+    //Set the part of the day value by hours variable
+    if (!getAllResult) {
+      switch ((hours! / 8).floor()) {
+        case 1:
+          partOfTheDay = PartOfTheDay.During_The_Day;
+          break;
+        case 2:
+          partOfTheDay = PartOfTheDay.Evening;
+          break;
+        default:
+          partOfTheDay = PartOfTheDay.Dawn;
+          break;
+      }
+
+      parameters = {
+        "datum": date,
+        "hour": hour,
+        "min": minute,
+        "naptipus": 0,
+        "preferencia": 0,
+        "keresztul": through,
+        "napszak": "${partOfTheDay.index + 1}",
+        "maxwalk": walkDistanceInMeters,
+        "maxatszallas": "${transferCount}",
+        "maxvar": "${waitInMinutes}",
+        "rendezes": 1,
+        "honnan": from,
+        "hova": to,
+      };
+    } else {
+      parameters = {
+        "datum": date,
+        "hour": hour,
+        "min": minute,
+        "naptipus": 0,
+        "preferencia": 0,
+        "keresztul": through,
+        "maxwalk": walkDistanceInMeters,
+        "maxatszallas": "${transferCount}",
+        "maxvar": "${waitInMinutes}",
+        "rendezes": 1,
+        "honnan": from,
+        "hova": to,
+      };
+    }
+
     //The query parameters
-    Map<String, dynamic> parameters = {
-      "datum": date,
-      "hour": hour,
-      "min": minute,
-      "naptipus": 0,
-      "preferencia": 0,
-      "keresztul": through,
-      "napszak": "${partOfTheDay.index + 1}",
-      "maxwalk": walkDistanceInMeters,
-      "maxatszallas": "${transferCount}",
-      "maxvar": "${waitInMinutes}",
-      "rendezes": 1,
-      "honnan": from,
-      "hova": to,
-    };
 
     //Convert to JSON body
     String body = _toJSON(parameters, "getRoutes");
@@ -100,10 +134,11 @@ class MenetrendAPI {
     Map<String, dynamic> all_results = jsonDecode(response.body);
 
     //If have any problem, throw a exception with the error messange
-    if (all_results.values.contains("error"))
+    if (all_results.values.contains("error")) {
       throw new Exception(
         all_results["errMsg"],
       );
+    }
 
     Map<String, dynamic> stationResults = all_results["results"]["talalatok"];
 
@@ -133,12 +168,13 @@ class MenetrendAPI {
             .floor()
             .abs();
 
-        int minutess = ((((nativeInformations[j]["DepartureTime"] / 60) -
-                    ((nativeInformations[j]["DepartureTime"] / 60) as double)
-                        .round()) *
-                60) as double)
+        int minutess = ((nativeInformations[j]["DepartureTime"] / 60) as double)
             .floor()
             .abs();
+
+        minutess =
+            ((nativeInformations[j]["DepartureTime"] as int) - (hour * 60))
+                .floor();
 
         DateTime _startDate = searchDate ??
             new DateTime(DateTime.now().year, DateTime.now().month,
@@ -178,8 +214,8 @@ class MenetrendAPI {
         );
 
         SubRoute subRoute = new SubRoute(
-          startLocation: _startStation,
-          targetLocation: _arrivalStation,
+          start: _startStation,
+          target: _arrivalStation,
           name: _routeName,
           startDate: _startDate,
           arrivalDate: _arrivalDate,

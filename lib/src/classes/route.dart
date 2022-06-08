@@ -1,89 +1,126 @@
-import 'package:menetrendek_api/src/classes/station.dart';
-import 'package:menetrendek_api/src/classes/sub_route.dart';
-import 'package:menetrendek_api/src/intefaces/iroute.dart';
+import '../classes/station.dart';
+import '../classes/sub_route.dart';
+import '../enums.dart';
+import '../interfaces/iroute.dart';
 
+///Represents a bus, train, etc. route with all sub route
 class Route implements IRoute {
   //Sub-routes of the tarvel
   List<SubRoute> _subRoutes = [];
 
-  List<SubRoute> get SubRoutes => _subRoutes;
+  Map<String, Duration> _availableTime = {};
 
-  @override
-  DateTime get ArrivalTime => _subRoutes.last.ArrivalDate;
+  //Constructor
+  Route(List<SubRoute> subRoutes) {
+    _subRoutes = subRoutes;
 
-  @override
-  bool get CanBuyETicket =>
-      !_subRoutes.where((element) => element.CanBuyETicket).isEmpty;
-
-  @override
-  DateTime get DepartureTime => _subRoutes.first.StartDate;
-
-  @override
-  double get Distance {
-    double distance = 0;
-
-    for (SubRoute route in _subRoutes) {
-      distance += route.Distance;
+    //Calculate the available time between all sub route
+    for (int i = 0; i < subRoutes.length - 1; i++) {
+      _availableTime.addAll(
+        {
+          "${i}=>${i + 1}": subRoutes[i]
+              .departureTime()
+              .difference(subRoutes[i + 1].departureTime())
+        },
+      );
     }
-
-    return distance;
   }
 
-  @override
-  bool get HasWIFI => !_subRoutes.where((element) => element.HasWIFI).isEmpty;
+  //<--- Methods --->
 
-  @override
-  bool get HighSpeedVehilce =>
-      !_subRoutes.where((element) => element.HighSpeedVehilce).isEmpty;
+  ///All sub routes of the travel
+  List<SubRoute> SubRoutes() => _subRoutes;
 
-  @override
-  Station get StartStation => _subRoutes.first.StartStation;
-
-  @override
-  Station get TargetStation => _subRoutes.last.TargetStation;
-
-  @override
-  int get TicketPrice {
-    int price = 0;
-
-    for (SubRoute route in _subRoutes) {
-      price += route.TicketPrice;
-    }
-
-    return price;
+  ///The available times between all sub routes
+  Map<String, Duration> getAllAvailableTime() {
+    return _availableTime;
   }
 
+  ///Start date of the route
   @override
-  Duration get DurationOfTheArrival {
+  DateTime arrivalTime() {
+    return _subRoutes.first.arrivalTime();
+  }
+
+  ///End date of the route
+  @override
+  DateTime departureTime() {
+    return _subRoutes.last.departureTime();
+  }
+
+  ///Total distance between destination and starting point
+  @override
+  double distance() {
+    double allDistance = 0.0;
+
+    for (SubRoute subRoute in _subRoutes) {
+      allDistance += subRoute.distance();
+    }
+
+    return allDistance;
+  }
+
+  ///Total travel time between destination and starting point
+  @override
+  Duration durationOfTheArrival() {
     int hour = 0;
     int minutes = 0;
 
     for (SubRoute route in _subRoutes) {
-      hour += route.DurationOfTheArrival.inHours.abs();
-      minutes += route.DurationOfTheArrival.inMinutes.abs();
+      hour += route.durationOfTheArrival().inHours.abs();
+      minutes += route.durationOfTheArrival().inMinutes.abs() - (hour * 60);
     }
 
     return new Duration(days: 0, hours: hour, minutes: minutes);
   }
 
-  ///The price with 50% discount
-  int get StudentTicketPrice => (TicketPrice * 0.5).round();
-
-  ///The price with 90% discount
-  int get NintyTicketPrice => (TicketPrice * 0.9).round();
-
-  ///All additional price of the route
-  int get AdditionalTicketPrice {
-    int price = 0;
+  ///Total ticket price between destination and starting point by ticket type
+  @override
+  int getTicketPrice(TicketType ticketType) {
+    int allFare = 0;
 
     for (SubRoute route in _subRoutes) {
-      price += route.AdditionalTicketPrice;
+      allFare += route.getTicketPrice(ticketType);
     }
 
-    return price;
+    return allFare;
   }
 
-  Route(List<SubRoute> subRoutes) {
-    _subRoutes = subRoutes;
+  @override
+  bool hasWIFI() {
+    return !_subRoutes.where((element) => element.hasWIFI()).isEmpty;
+  }
+
+  @override
+  bool canBuyETicket() {
+    return !_subRoutes.where((element) => element.canBuyETicket()).isEmpty;
+  }
+
+  @override
+  bool highSpeedVehilce() {
+    return !_subRoutes.where((element) => element.highSpeedVehilce()).isEmpty;
+  }
+
+  ///Start station of the route
+  @override
+  Station startStation() {
+    return _subRoutes.first.startStation();
+  }
+
+  ///Arrival station of the route
+  @override
+  Station targetStation() {
+    return _subRoutes.first.targetStation();
+  }
+
+  @override
+  int additionalTicketPrice() {
+    int allFare = 0;
+
+    for (SubRoute route in _subRoutes) {
+      allFare += route.additionalTicketPrice();
+    }
+
+    return allFare;
   }
 }
