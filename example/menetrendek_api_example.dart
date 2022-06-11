@@ -4,34 +4,46 @@ import 'package:menetrendek_api/src/classes/station.dart';
 
 void main() {
   runAsync();
-
-  //TODO
-  //Befejezni a duration paramétert
-  //Kommentezni
-  //Tovább dolgozni :)
 }
 
 void runAsync() async {
   //Return all station by input
   //Example:
   //  - stateName: "Székesfehérvár, autóbusz-állomás"
-  //Result: 1db stations
+  //Result: 1db station
   List<Station> _stations = await MenetrendAPI.Instance.getStationOrAddrByText(
-      stateName: "Székesfehérvár, autóbusz-állomás");
+      stateName: "Székesfehérvár, autóbusz-állomás", local: false);
+
+  //Return all station by input
+  //Example:
+  //  - stateName: "Aba, Hösök tere"
+  //Result: 1db station
+  List<Station> _stations2 = await MenetrendAPI.Instance.getStationOrAddrByText(
+      stateName: "Aba, Hösök tere", local: false);
 
   //Query all route
   //Example:
-  //  - from: "Aba, Hősök tere"
-  //  - fromID: 399
+  //  - from: from the search
+  //  - fromID: from the search
   //  - to: from the search
   //  - toID: from the search
-  //  - Result: 14 db
+  //
+  //Result: 14 db route
   List<Route> _routes = await MenetrendAPI.Instance.getActualRoutes(
-    from: "Aba, Hösök tere",
-    fromID: 599,
-    to: _stations[0].SettlementName,
-    toID: _stations[0].StationID,
-    hours: 00,
-    minutes: 00,
+    from: _stations2[0],
+    to: _stations[0],
+    searchDate: new DateTime(2022, 6, 12, 0, 0),
+  );
+
+  //Query all route, by one station
+  //Example:
+  //  - from: from search
+  //  - date: 2022-06-12
+  //  - maximum result count: 11 (10 + 1)
+  //Result:
+  List<Route> _timeTable = await MenetrendAPI.Instance.getTimeTable(
+    from: _stations[0],
+    date: new DateTime(2022, 6, 12, 0, 0),
+    maxResult: 2,
   );
 }

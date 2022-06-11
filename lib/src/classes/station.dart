@@ -11,6 +11,8 @@ class Station {
   late String _settlementName;
   //The station name
   late String _stationName;
+  //Route a local route?
+  late bool _local;
   //Station type (Settlement or Station of a settlement)
   late StationType _type;
 
@@ -32,11 +34,12 @@ class Station {
 
   //<--- Methods --->
   Station(String stationName, int stationID, String settlementName,
-      int settlementID, StationType type) {
+      int settlementID, bool local, StationType type) {
     _stationName = stationName;
     _stationID = stationID;
     _settlementName = settlementName;
     _settlementID = settlementID;
+    _local = local;
     _type = type;
   }
 }
