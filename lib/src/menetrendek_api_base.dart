@@ -2,7 +2,6 @@
 
 //Core library
 import 'dart:convert';
-import 'dart:math' as Mathf;
 
 //The created classes
 import '../src/classes/route.dart';
@@ -37,7 +36,13 @@ class MenetrendAPI {
         .None_Specified, //Get all route, regardless of the time of day
     RouteDirection routeDirection =
         RouteDirection.There, //Target route direction
+    List<VehicleType> vehicles = const [], //The specified vehicles
   }) async {
+    //Check the vehicle type of the stations is the same
+    if (from.Vehilce_Type != to.Vehilce_Type) {
+      throw new Exception("A jármüvek típusa nem egyezzik!");
+    }
+
     //The result(s)
     List<Route> routes = [];
 
@@ -52,6 +57,9 @@ class MenetrendAPI {
       //Set all parameters
       parameters.addAll(
         {
+          "networks": [
+            from.Vehilce_Type,
+          ],
           "naptipus": 0,
           "preferencia": 0,
           "keresztul": through,
@@ -144,6 +152,7 @@ class MenetrendAPI {
         Station _startStation = new Station(
           nativeInformations[j]["DepStationName"],
           nativeInformations[j]["DepartureStation"],
+          nativeInformations[j]["NetworkId"],
           nativeInformations[j]["FromSettle"],
           nativeInformations[j]["DepartureSettle"],
           nativeInformations[j]["LocalDomainCode"] != "",
@@ -153,6 +162,7 @@ class MenetrendAPI {
         Station _arrivalStation = new Station(
           nativeInformations[j]["ArrStationName"],
           nativeInformations[j]["ArrivalStation"],
+          nativeInformations[j]["NetworkId"],
           nativeInformations[j]["ToSettle"],
           nativeInformations[j]["ArrivalSettle"],
           nativeInformations[j]["LocalDomainCode"] != "",
@@ -182,23 +192,32 @@ class MenetrendAPI {
       routes.add(new Route(subRoutes));
     }
 
-    print("");
-
     return routes;
   }
 
   ///Search the stations or adressess by input
   Future<List<Station>> getStationOrAddrByText({
     required String stateName,
-    String searchIn = "stations",
-    bool local = false,
+    String searchIn = "stations", //The search area
+    List<VehicleType> vehicles = const [], //The specified vehicles
+    bool local = false, //Search local stations?
   }) async {
     List<Station> result = [];
+    List<int> vehiclesInInt = [];
+
+    //Convert the vehicles to integer identifiers
+    if (!vehicles.isEmpty) {
+      for (VehicleType item in vehicles) {
+        vehiclesInInt
+            .addAll(VehicleTypeAdapter.Instance.getVehicleTypeInInt(item));
+      }
+    }
 
     //Query parameters
     Map<String, dynamic> parameters = {
       "inputText": stateName,
       "searchIn": searchIn,
+      "networks": vehiclesInInt,
     };
 
     //Convert to JSON body
@@ -227,6 +246,7 @@ class MenetrendAPI {
       Station station = new Station(
         item["lsname"],
         item["ls_id"],
+        item["network_id"],
         item["settlement_name"],
         item["settlement_id"] is String
             ? int.parse(item["settlement_id"])
@@ -269,6 +289,9 @@ class MenetrendAPI {
       //Set all parameters
       parameters.addAll(
         {
+          "networks": [
+            from.Vehilce_Type,
+          ],
           "naptipus": 0,
           "preferencia": "0",
           "napszak": "${_partOfTheDay.index + 1}",
@@ -288,6 +311,9 @@ class MenetrendAPI {
     } else {
       parameters.addAll(
         {
+          "networks": [
+            from.Vehilce_Type,
+          ],
           "naptipus": 0,
           "preferencia": "0",
           "maxwalk": maxWalkDistance,
@@ -373,6 +399,7 @@ class MenetrendAPI {
           Station _arrivalStation = new Station(
             nativeInformations[j]["ArrStationName"],
             nativeInformations[j]["ArrivalStation"],
+            nativeInformations[j]["NetworkId"],
             nativeInformations[j]["ToSettle"],
             nativeInformations[j]["ArrivalSettle"],
             nativeInformations[j]["LocalDomainCode"] != "",
@@ -382,6 +409,7 @@ class MenetrendAPI {
           Station _startStation = new Station(
             nativeInformations[j]["StartStationName"],
             nativeInformations[j]["StartStation"],
+            nativeInformations[j]["NetworkId"],
             nativeInformations[j]["StartSettleName"],
             nativeInformations[j]["StartSettle"],
             nativeInformations[j]["LocalDomainCode"] != "",
@@ -422,6 +450,7 @@ class MenetrendAPI {
         Station _depStation = new Station(
           nativeInformations[j]["DepStationName"],
           nativeInformations[j]["DepartureStation"],
+          nativeInformations[j]["NetworkId"],
           nativeInformations[j]["FromSettle"],
           nativeInformations[j]["DepartureSettle"],
           nativeInformations[j]["LocalDomainCode"] != "",
@@ -431,6 +460,7 @@ class MenetrendAPI {
         Station _arrivalStation = new Station(
           nativeInformations[j]["ArrStationName"],
           nativeInformations[j]["ArrivalStation"],
+          nativeInformations[j]["NetworkId"],
           nativeInformations[j]["ToSettle"],
           nativeInformations[j]["ArrivalSettle"],
           nativeInformations[j]["LocalDomainCode"] != "",
@@ -488,6 +518,13 @@ class MenetrendAPI {
               result +=
                   "\"${elements.keys.elementAt(i)}\":\"${elements.values.elementAt(i)}\"${i != elements.length - 2 ? "," : ""}";
               break;
+            case List:
+              result += "\"networks\":[";
+              for (var item in elements.values.elementAt(i)) {
+                result += item.toString();
+              }
+              result += "]${i != elements.length - 2 ? "," : ""}";
+              break;
           }
 
           //If this variables the next, break the loop
@@ -523,6 +560,13 @@ class MenetrendAPI {
             case String:
               result +=
                   "\"${elements.keys.elementAt(i)}\":\"${elements.values.elementAt(i)}\"${i != elements.length - 2 ? "," : ""}";
+              break;
+            case List:
+              result += "\"networks\":[";
+              for (var item in elements.values.elementAt(i)) {
+                result += item.toString();
+              }
+              result += "]${i != elements.length - 2 ? "," : ""}";
               break;
           }
 
@@ -584,6 +628,10 @@ class MenetrendAPI {
         ? "0${DateTime.now().minute}"
         : "${DateTime.now().minute}";
 
-    return {"datum": date, "hour": hour, "min": minute};
+    return {
+      "datum": date,
+      "hour": hour,
+      "min": minute,
+    };
   }
 }

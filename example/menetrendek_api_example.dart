@@ -10,6 +10,7 @@ void runAsync() async {
   //Return all station by input
   //Example:
   //  - stateName: "Székesfehérvár, autóbusz-állomás"
+  //  - local: false
   //Result: 1db station
   List<Station> _stations = await MenetrendAPI.Instance.getStationOrAddrByText(
       stateName: "Székesfehérvár, autóbusz-állomás", local: false);
@@ -17,6 +18,7 @@ void runAsync() async {
   //Return all station by input
   //Example:
   //  - stateName: "Aba, Hösök tere"
+  //  - local: false
   //Result: 1db station
   List<Station> _stations2 = await MenetrendAPI.Instance.getStationOrAddrByText(
       stateName: "Aba, Hösök tere", local: false);
@@ -32,7 +34,7 @@ void runAsync() async {
   List<Route> _routes = await MenetrendAPI.Instance.getActualRoutes(
     from: _stations2[0],
     to: _stations[0],
-    searchDate: new DateTime(2022, 6, 12, 0, 0),
+    searchDate: new DateTime(2022, 6, 19, 0, 0),
   );
 
   //Query all route, by one station
@@ -44,6 +46,6 @@ void runAsync() async {
   List<Route> _timeTable = await MenetrendAPI.Instance.getTimeTable(
     from: _stations[0],
     date: new DateTime(2022, 6, 12, 0, 0),
-    maxResult: 2,
+    maxResult: 10,
   );
 }
