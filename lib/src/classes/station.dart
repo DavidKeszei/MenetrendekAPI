@@ -1,4 +1,4 @@
-import 'package:menetrendek_api/src/enums.dart';
+import '../enums.dart';
 
 ///Represent stations or settlements
 class Station {
@@ -7,6 +7,8 @@ class Station {
   late int _stationID;
   //Indentifier of a settlement to which it belongs
   late int _settlementID;
+  //Vehilche type
+  late int _vehilceType;
   //Name of the settlement
   late String _settlementName;
   //The station name
@@ -23,6 +25,9 @@ class Station {
   ///Indentifier of a settlement to which it belongs
   int get SettlementID => _settlementID;
 
+  ///Vehilche type
+  int get Vehilce_Type => _vehilceType;
+
   ///Name of the settlement
   String get SettlementName => _settlementName;
 
@@ -33,13 +38,21 @@ class Station {
   StationType get Type => _type;
 
   //<--- Methods --->
-  Station(String stationName, int stationID, String settlementName,
-      int settlementID, bool local, StationType type) {
+  Station(
+    String stationName,
+    int stationID,
+    int vehicleType,
+    String settlementName,
+    int settlementID,
+    bool local,
+    StationType type,
+  ) {
     _stationName = stationName;
     _stationID = stationID;
     _settlementName = settlementName;
     _settlementID = settlementID;
     _local = local;
     _type = type;
+    _vehilceType = vehicleType;
   }
 }

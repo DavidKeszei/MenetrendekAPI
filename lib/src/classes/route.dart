@@ -29,7 +29,7 @@ class Route implements IRoute {
   //<--- Methods --->
 
   ///All sub routes of the travel
-  List<SubRoute> SubRoutes() => _subRoutes;
+  List<SubRoute> subRoutes() => _subRoutes;
 
   ///The available times between all sub routes
   Map<String, Duration> getAllAvailableTime() {
