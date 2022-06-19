@@ -1,6 +1,7 @@
 import 'package:menetrendek_api/menetrendek_api.dart';
 import 'package:menetrendek_api/src/classes/route.dart';
 import 'package:menetrendek_api/src/classes/station.dart';
+import 'package:menetrendek_api/src/enums.dart';
 
 void main() {
   runAsync();
@@ -32,20 +33,27 @@ void runAsync() async {
   //
   //Result: 14 db route
   List<Route> _routes = await MenetrendAPI.Instance.getActualRoutes(
-    from: _stations2[0],
-    to: _stations[0],
-    searchDate: new DateTime(2022, 6, 19, 0, 0),
+    from: _stations[0],
+    to: _stations2[0],
+    searchDate: new DateTime(2022, 06, 20),
   );
 
   //Query all route, by one station
   //Example:
   //  - from: from search
-  //  - date: 2022-06-12
-  //  - maximum result count: 11 (10 + 1)
+  //  - date: 2022-06-20
+  //  - maximum result count: 11 (first number is the 0)
   //Result:
   List<Route> _timeTable = await MenetrendAPI.Instance.getTimeTable(
     from: _stations[0],
-    date: new DateTime(2022, 6, 12, 0, 0),
     maxResult: 10,
   );
+
+  print(
+      "Route: ${_routes[0].subRoutes()[0].startStation().StationName} -> ${_routes[0].subRoutes()[0].targetStation().StationName}");
+  print("Deperture time: ${_routes[0].departureTime()}");
+  print("Arrival time: ${_routes[0].arrivalTime()}");
+  print(
+      "Price: ${_routes[0].getTicketPrice(TicketType.Student)}Ft (${TicketType.Student.name})");
+  print("Distance: ${_routes[0].distance()}km");
 }

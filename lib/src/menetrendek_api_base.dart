@@ -50,9 +50,9 @@ class MenetrendAPI {
     Map<String, dynamic> parameters = _initCommonInfo(searchDate);
 
     //Set the part of the day value by hours variable
-    if (partOfTheDay != PartOfTheDay.None_Specified) {
+    if (partOfTheDay == PartOfTheDay.None_Specified) {
       PartOfTheDay _partOfTheDay =
-          _setPartOFTheDay(DateTime.parse(parameters["datum"]).hour);
+          _setPartOFTheDay(int.tryParse(parameters["hour"]));
 
       //Set all parameters
       parameters.addAll(
@@ -284,7 +284,7 @@ class MenetrendAPI {
     //Set the part of the day value by hours variable
     if (partOfTheDay != PartOfTheDay.None_Specified) {
       PartOfTheDay _partOfTheDay =
-          _setPartOFTheDay(DateTime.parse(parameters["datum"]).hour);
+          _setPartOFTheDay(int.tryParse(parameters["hour"]));
 
       //Set all parameters
       parameters.addAll(
@@ -370,6 +370,7 @@ class MenetrendAPI {
           stationResults["${i + 1}"]["nativeData"];
 
       for (int j = 0; j < nativeInformations.length; j++) {
+        //All informations of the route
         String _routeName = nativeInformations[j]["DomainCompanyName"];
 
         int _ticketPrice = nativeInformations[j]["Fare"] as int;
@@ -385,7 +386,8 @@ class MenetrendAPI {
         bool _lowFloor = nativeInformations[j]["LowFloor"] != 0;
         bool _preBuy = nativeInformations[j]["Prebuy"] != 0;
 
-        //If exist this element: "StartStaion"
+        //If exist this element: "StartStaion", than the departure place equal
+        //the start station place
         if (nativeInformations[j].containsKey("StartStation")) {
           int _startTime = nativeInformations[j]["StartTime"] as int;
 
@@ -440,9 +442,11 @@ class MenetrendAPI {
           continue;
         }
 
+        //Departure / Start time
         DateTime _deptDate = new DateTime(
             _resultDate.year, _resultDate.month, _resultDate.day, 0, _depTime);
 
+        //Arrival time
         DateTime _arrivalDate = new DateTime(_resultDate.year,
             _resultDate.month, _resultDate.day, 0, _arrivalTime);
 
@@ -600,6 +604,7 @@ class MenetrendAPI {
     }
   }
 
+  //Set all common infos
   Map<String, dynamic> _initCommonInfo(DateTime? searchDate) {
     //Check any parameters for null value
     if (searchDate != null) {
