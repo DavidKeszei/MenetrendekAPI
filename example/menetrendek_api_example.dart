@@ -14,7 +14,7 @@ void runAsync() async {
   //  - local: false
   //Result: 1db station
   List<Station> _stations = await MenetrendAPI.Instance.getStationOrAddrByText(
-      stateName: "Székesfehérvár, autóbusz-állomás", local: false);
+      stateName: "Szeged, autóbusz-állomás", local: false);
 
   //Return all station by input
   //Example:
@@ -22,14 +22,12 @@ void runAsync() async {
   //  - local: false
   //Result: 1db station
   List<Station> _stations2 = await MenetrendAPI.Instance.getStationOrAddrByText(
-      stateName: "Aba, Hösök tere", local: false);
+      stateName: "Székesfehérvár, autóbusz-állomás", local: false);
 
   //Query all route
   //Example:
   //  - from: from the search
-  //  - fromID: from the search
   //  - to: from the search
-  //  - toID: from the search
   //
   //Result: 14 db route
   List<Route> _routes = await MenetrendAPI.Instance.getActualRoutes(
@@ -49,6 +47,7 @@ void runAsync() async {
     maxResult: 10,
   );
 
+  //Debug
   print(
       "Route: ${_routes[0].subRoutes()[0].startStation().StationName} -> ${_routes[0].subRoutes()[0].targetStation().StationName}");
   print("Deperture time: ${_routes[0].departureTime()}");
@@ -56,4 +55,5 @@ void runAsync() async {
   print(
       "Price: ${_routes[0].getTicketPrice(TicketType.Student)}Ft (${TicketType.Student.name})");
   print("Distance: ${_routes[0].distance()}km");
+  print("Subroute Count: ${_routes[0].subRoutes().length}");
 }

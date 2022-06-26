@@ -26,17 +26,16 @@ class MenetrendAPI {
   Future<List<Route>> getActualRoutes({
     required Station from, //Start station or state
     required Station to, //End station or state
-    String through = "", //Through station(s) or state(s)
+    Station? through = null, //Through station(s) or state(s)
     int walkDistanceInMeters = 0, //Max distance to next station
     int transferCount = 0, //Max transfer count in bus
-    int waitInMinutes = 0, //Max wait limit
+    int maxWaitTime = 0, //Max wait limit
     DateTime? searchDate = null, //Start date of the search
     bool backAndForth = false, //This route go there & back?
     PartOfTheDay partOfTheDay = PartOfTheDay
         .None_Specified, //Get all route, regardless of the time of day
     RouteDirection routeDirection =
         RouteDirection.There, //Target route direction
-    List<VehicleType> vehicles = const [], //The specified vehicles
   }) async {
     //Check the vehicle type of the stations is the same
     if (from.Vehilce_Type != to.Vehilce_Type) {
@@ -66,7 +65,7 @@ class MenetrendAPI {
           "napszak": "${_partOfTheDay.index + 1}",
           "maxwalk": walkDistanceInMeters,
           "maxatszallas": "${transferCount}",
-          "maxvar": "${waitInMinutes}",
+          "maxvar": "${maxWaitTime}",
           "rendezes": 1,
           "honnan": from.StationName,
           "hova": to.StationName,
@@ -80,7 +79,7 @@ class MenetrendAPI {
           "keresztul": through,
           "maxwalk": walkDistanceInMeters,
           "maxatszallas": "${transferCount}",
-          "maxvar": "${waitInMinutes}",
+          "maxvar": "${maxWaitTime}",
           "rendezes": 1,
           "honnan": from.StationName,
           "hova": to.StationName,
