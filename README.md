@@ -15,8 +15,8 @@ and the Flutter guide for
 ## Features
 
 * [Query all route between 2 station](#getActualRoute)
-* [Query the time table of the station](#getStationOrAddrByText)
-* Get a station by name
+* [Get a station by name](#getStationOrAddrByText)
+* [Query the time table of the station](#getTimeTable)
 
 ## getActualRoute
 
@@ -45,13 +45,52 @@ List<Route> _routes = await MenetrendAPI.Instance.getActualRoutes(
 );
 ```
 
-## Usage
+## getStationOrAddrByText
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+#### Description
+Query station by input.
 
+**Return:** Retrieve a list, which contains all stations or addresses by input. If the input not correct (example: not exist), then the result is a empty list.
+
+#### Required Parameters
+* **stateName** - searched station or address
+
+#### Not Neccessary Parameters
+* **searchIn** - search input type (station or address)
+* **vehicleType** - vehicle type(s) of the station or address
+* **local** - The station is local station? (With addresses not work.)
+
+#### Example
 ```dart
-const like = 'sample';
+List<Station> _stations = await MenetrendAPI.Instance.getStationOrAddrByText(stateName: "Székesfehérvár, autóbusz-állomás", local: false);
+```
+
+## getTimeTable
+
+#### Description
+Query a station time table by input.
+
+**Return:** Retrieve a list, which contains all the routes that start on it. If the input not correct (example: not found route), then throw a expection with the server error message.
+
+#### Required Parameters
+* **from** - start station
+
+#### Not Neccessary Parameters
+* **interval** - search interval
+* **date** - date of the query
+* **maxWalkDistance** - max. distance from a station in walk 
+* **transferCount** - max. collision points count of the route
+* **maxWaitTime** - max. time for a wait a route (in minute)
+* **routeDirection** - direction of the route
+* **partOfTheDay** - routes in a specific part of the day
+* **maxCount** - max. result element count of the query
+
+#### Example
+```dart
+List<Route> _timeTable = await MenetrendAPI.Instance.getTimeTable(
+  from: _stations[0],
+  maxResult: 10,
+);
 ```
 
 ## Additional information
