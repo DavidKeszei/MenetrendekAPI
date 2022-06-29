@@ -15,8 +15,8 @@ and the Flutter guide for
 ## Features
 
 * [Query all route between 2 station](#getActualRoute)
-* [Query the time table of the station](#getTimeTable)
 * [Get a station by name](#getStationOrAddrByText)
+* [Query the time table of the station](#getTimeTable)
 
 ## getActualRoute
 
