@@ -195,7 +195,7 @@ class MenetrendAPI {
     return routes;
   }
 
-  ///Search the stations or adressess by input
+  ///Search stations or adresses by input
   Future<List<Station>> getStationOrAddrByText({
     required String stateName,
     String searchIn = "stations", //The search area
